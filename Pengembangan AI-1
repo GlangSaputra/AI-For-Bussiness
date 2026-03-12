@@ -1,0 +1,276 @@
+{
+  "name": "T1",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "18fe807c-a54f-4c64-abe8-be8dfad9c16a",
+              "name": "chat",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        -48
+      ],
+      "id": "308b5904-c8fc-49b0-9ae5-964418775e9f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "880c49fb-63b4-4408-b548-e691687760b2",
+              "leftValue": "={{ $json.chat }}",
+              "rightValue": "N8N",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "cf3442a9-b6d1-4849-a8bf-dd878c620b3f",
+              "leftValue": "={{ $json.chat }}",
+              "rightValue": "Marketing",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "0a05c6b8-b0f9-439a-a282-6a949a360a20",
+              "leftValue": "={{ $json.chat }}",
+              "rightValue": "Produk",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "a89af6d5-fc63-461e-a307-5dac8ae7844d",
+              "leftValue": "={{ $json.chat }}",
+              "rightValue": "Nilai",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "ba67d4a2-298c-47e1-9a4c-25e53ddc935b",
+              "leftValue": "={{ $json.chat }}",
+              "rightValue": "Point",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        -208
+      ],
+      "id": "5bba5dbf-fdb1-436c-b5c9-e5b986ba6dea",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chat }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        464,
+        -64
+      ],
+      "id": "df43bc85-fc24-4fda-8a86-ce7daed0a8b1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Harap bertanya menggunakan salah satu contoh:\n1. N8N Adalah?\n2. Apa Trend Produk Saat Ini?\n3. Bagaimana Menerapkan Marketing Yang Benar?\n4. Apa Nilai Dari Sebuah Trend Produk?\n5. Apa Saja Point Point Marketing Yang Baik? \n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        -32
+      ],
+      "id": "a4a5fdad-bbba-49ff-b414-206bdcf6236c",
+      "name": "Send a text message",
+      "webhookId": "83f8766c-474d-471d-b8d5-975b71a06b18",
+      "credentials": {
+        "telegramApi": {
+          "id": "OoGQGoqwj49YhSgB",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        464,
+        144
+      ],
+      "id": "739e7a02-520b-46ba-a6f3-448cad77cce6",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "coZeiwK32XEIOuQd",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -160,
+        -48
+      ],
+      "id": "ae5bee64-c19c-4c96-964c-52a5e7ad781c",
+      "name": "Telegram Trigger",
+      "webhookId": "326ff753-96de-40f9-8747-1641299c532c",
+      "credentials": {
+        "telegramApi": {
+          "id": "OoGQGoqwj49YhSgB",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output.substring(0, 4000) }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        816,
+        -64
+      ],
+      "id": "03e2d2fa-58a0-4439-899d-85ca7162703f",
+      "name": "Send a text message2",
+      "webhookId": "57296829-fa03-44eb-9b38-36d6143ebf57",
+      "credentials": {
+        "telegramApi": {
+          "id": "OoGQGoqwj49YhSgB",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "afd4b171-0849-4427-8c93-5dcb055e4ac6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6c7c9a62a5e386291ae0b91cdaf7d4e0256d5679a47324ea1d34238b98dc264"
+  },
+  "id": "wycqLOqXoeyijuRa",
+  "tags": []
+}
