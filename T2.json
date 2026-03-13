@@ -1,0 +1,326 @@
+{
+  "name": "T2",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -416,
+        176
+      ],
+      "id": "c1defb06-6795-4f43-bcde-8bcdc82953ab",
+      "name": "Telegram Trigger",
+      "webhookId": "51023eb6-6f91-4206-9326-665a367c9c8c",
+      "credentials": {
+        "telegramApi": {
+          "id": "OoGQGoqwj49YhSgB",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "baf3b051-3fad-4b9d-93b9-04a2197c53f4",
+              "name": "chat",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -208,
+        176
+      ],
+      "id": "52984c49-4c57-4446-8429-3b4a741c3da8",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chat }}",
+        "options": {
+          "systemMessage": "Jawab hanya berdasarkan Google Sheets. Jika tidak ada data, sarankan hubungi tim support."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        256,
+        160
+      ],
+      "id": "afd9bca0-1ebd-4eb4-9353-58fa323b4d94",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Harap bertanya menggunakan salah satu contoh:  \n1. Apa tujuan utama marketing?\n2. Apa perbedaan antara marketing dan sales?\n3. Apa itu target market?\n4. Mengapa riset pasar penting dalam marketing?\n5. Apa peran digital marketing saat ini?\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f2992ecd-f1ab-407d-8e9d-718b4126c500",
+      "name": "Output False",
+      "webhookId": "7888351d-a0ef-40e1-ac53-163ffa24bf80",
+      "credentials": {
+        "telegramApi": {
+          "id": "OoGQGoqwj49YhSgB",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "36b23e06-8678-4855-a4a3-d57e40e9e003",
+              "leftValue": "={{ $json.chat }}",
+              "rightValue": "tujuan",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "67ef6548-02a2-4fae-a47c-14d29e72666e",
+              "leftValue": "={{ $json.chat }}",
+              "rightValue": "perbedaan",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "0042b300-1c75-4ed8-8e2f-69434af804ae",
+              "leftValue": "={{ $json.chat }}",
+              "rightValue": "target",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "eee3b716-78ae-4f67-a24c-d0007ba0caa1",
+              "leftValue": "={{ $json.chat }}",
+              "rightValue": "riset",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "fbff63ea-0157-4710-a97f-abb90f551415",
+              "leftValue": "={{ $json.chat }}",
+              "rightValue": "peran",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        176
+      ],
+      "id": "2e889e61-ded0-4b7b-b408-b30923cdd291",
+      "name": "Periksa Pesan"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1-819uxHSwcJyMKG5qiYxNi6KZV1nkvEOeHdJzBmKmiU",
+          "mode": "list",
+          "cachedResultName": "Pertanyaan Marketing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-819uxHSwcJyMKG5qiYxNi6KZV1nkvEOeHdJzBmKmiU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-819uxHSwcJyMKG5qiYxNi6KZV1nkvEOeHdJzBmKmiU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        368
+      ],
+      "id": "5db2c810-a6b7-480e-9585-2661b035c48e",
+      "name": "FAQ",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "utAiwXNfikfCvteo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        608,
+        160
+      ],
+      "id": "e4d8f19a-834b-4173-b606-08e5c376f6c1",
+      "name": "True Output",
+      "webhookId": "0536f613-8f05-4549-af71-d11fcf94cf93",
+      "credentials": {
+        "telegramApi": {
+          "id": "OoGQGoqwj49YhSgB",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        256,
+        336
+      ],
+      "id": "f249f729-67c7-47fe-8ab2-3abdcc16f8f0",
+      "name": "Google Gemini Chat Model",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "vzBrFlFSiHEFx1AX",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Periksa Pesan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Periksa Pesan": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Output False",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "True Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7feac85f-0b78-4558-855a-3edd84ed59ce",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6c7c9a62a5e386291ae0b91cdaf7d4e0256d5679a47324ea1d34238b98dc264"
+  },
+  "id": "vE5YQ560j9pzV6Ty",
+  "tags": []
+}
