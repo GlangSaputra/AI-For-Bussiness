@@ -1,0 +1,181 @@
+{
+  "name": "T3",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1184,
+        384
+      ],
+      "id": "943e13ee-2a87-4197-91f2-3ba9caf378b2",
+      "name": "Telegram Trigger",
+      "webhookId": "65a44d98-115f-4dbb-a5bd-f2bb4cc03e3b",
+      "credentials": {
+        "telegramApi": {
+          "id": "OoGQGoqwj49YhSgB",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "# Garis Besar\nKamu adalah asisten pelatihan NF Academy yang membantu menjawab pertanyaan pengguna.\n\n# Tool\nJawablah pertanyaan tentang produk pelatihan, deskripsi, harga, dan lokasi pelatihan berdasarkan data yang tersedia pada tool \"Get row(s) in sheet in Google Sheets\".\n\n# Batasan\nJika informasi tidak ditemukan pada Google Sheets, jangan mengarang jawaban.\n\nBerikan jawaban:\n\"Maaf, saya belum memiliki data yang Anda minta. Silakan lihat web nfacademy.id\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1472,
+        384
+      ],
+      "id": "927ca6eb-95fe-4743-8f91-9ae7aaeb91bd",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        592
+      ],
+      "id": "826e46c1-b042-4ce1-9404-46cf1f5025d9",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "vzBrFlFSiHEFx1AX",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"id\"]}}",
+        "text": "={{ $json.output }} \n\nTerima kasih, Kak {{$node[\"Telegram Trigger\"].json[\"message\"][\"from\"][\"first_name\"]}}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1808,
+        384
+      ],
+      "id": "0321279d-75c0-4cd9-91e8-578209c377ca",
+      "name": "Telegram Send",
+      "webhookId": "b1ab5922-f658-4b03-9271-7fa6d64d669e",
+      "credentials": {
+        "telegramApi": {
+          "id": "OoGQGoqwj49YhSgB",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Nwq7yMBQOT5fSbMy1ydpemO9no8uvp_LPNQGJ93gvzI",
+          "mode": "list",
+          "cachedResultName": "n8n 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Nwq7yMBQOT5fSbMy1ydpemO9no8uvp_LPNQGJ93gvzI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Nwq7yMBQOT5fSbMy1ydpemO9no8uvp_LPNQGJ93gvzI/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1616,
+        608
+      ],
+      "id": "b015af15-750a-4599-b1ec-30e341e7efee",
+      "name": "Get row(s) in sheet in Google Sheets1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "utAiwXNfikfCvteo",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Telegram Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e7616781-64a3-4e8d-ae73-27d261c5df23",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6c7c9a62a5e386291ae0b91cdaf7d4e0256d5679a47324ea1d34238b98dc264"
+  },
+  "id": "NrRUxIPm9P5qHKQ8",
+  "tags": []
+}
