@@ -1,0 +1,480 @@
+{
+  "name": "T8 IAK - Analisis Sentimen Harian",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analisis sentimen dari teks berikut.\nRespon HANYA dengan satu kata: Positive, Negative, atau Neutral.\n{{ $json.parameters.fields.text }}\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -64,
+        -32
+      ],
+      "id": "e256f280-c253-43d2-9207-d72544724b29",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1PQCg0Pyj2NYHrzeET8kMhuLxWeAzwvYH9xftlHoxu88",
+          "mode": "list",
+          "cachedResultName": "rss_all_20260422_1405",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PQCg0Pyj2NYHrzeET8kMhuLxWeAzwvYH9xftlHoxu88/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 860922336,
+          "mode": "list",
+          "cachedResultName": "rss_all_20260422_1405",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PQCg0Pyj2NYHrzeET8kMhuLxWeAzwvYH9xftlHoxu88/edit#gid=860922336"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $('Edit Fields').item.json.parameters.fields.title }}",
+            "date": "={{ $('Edit Fields').item.json.parameters.fields.date }}",
+            "assets": "={{ $('Edit Fields').item.json.parameters.fields.asset }}",
+            "compound": "={{ $('Edit Fields').item.json.parameters.fields.compound_score }}",
+            "media": "=",
+            "summary": "={{ $('Edit Fields').item.json.parameters.fields.text }}",
+            "url": "={{ $('Edit Fields').item.json.parameters.fields.source }}",
+            "label": "={{ $('Edit Fields').item.json.parameters.fields.sentiment_label }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "media",
+              "displayName": "media",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tags",
+              "displayName": "tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "assets",
+              "displayName": "assets",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "label",
+              "displayName": "label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "compound",
+              "displayName": "compound",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pos",
+              "displayName": "pos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "neu",
+              "displayName": "neu",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "neg",
+              "displayName": "neg",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "scraped_at",
+              "displayName": "scraped_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        -32
+      ],
+      "id": "6f0f7904-a963-4710-9ded-128b36914097",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "utAiwXNfikfCvteo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        176
+      ],
+      "id": "19972a2d-93a0-4b2d-afa0-53c815b7200a",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "FHnqitgXvazT3eoR",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $items(\"Baca Data\");\n\nlet bullish = 0;\nlet bearish = 0;\nlet neutral = 0;\nlet total = 0;\n\nfor (const item of items) {\n  const sentiment = item.json.label; // kolom 'label' dari sheet\n\n  if (sentiment === 'BULLISH') {\n    bullish++;\n  } else if (sentiment === 'BEARISH') {\n    bearish++;\n  } else if (sentiment === 'NEUTRAL') {\n    neutral++;\n  }\n  total++;\n}\n\nreturn [\n  {\n    json: {\n      total_tweets: total,\n      bullish,\n      bearish,\n      neutral\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        320
+      ],
+      "id": "adbf8c8d-b659-47f5-8304-d0da50bee316",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Anda adalah seorang analis sentimen media sosial.\nTuliskan kesimpulan singkat (dalam bahasa Indonesia) untuk laporan Telegram, berdasarkan data berikut:\n\n- Total Tweet Dianalisis: {{ $json.total_tweets }}\n- Sentimen Optimis: {{ $json.bullish }}\n- Sentimen Pesimis: {{ $json.bearish }}\n- Sentimen Netral: {{ $json.neutral }}\n\nBerikan ringkasan singkat tentang apa arti angka-angka ini (misalnya, \"Sentimen hari ini cenderung positif,\" \"Ada banyak keraguan di pasar,\" dll.).\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        96,
+        320
+      ],
+      "id": "a1799009-a1dc-4220-b371-33aacc781386",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "chatId": "6058608381",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        320
+      ],
+      "id": "cdd08b8d-eb56-4a31-9d22-954d5c4ba62d",
+      "name": "Send a text message",
+      "webhookId": "318274bb-8e57-4c0f-b220-a5b6d588382e",
+      "credentials": {
+        "telegramApi": {
+          "id": "OoGQGoqwj49YhSgB",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        176,
+        480
+      ],
+      "id": "741c3a67-b0e6-4577-9454-9437b8c03dfa",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "FHnqitgXvazT3eoR",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -480,
+        -32
+      ],
+      "id": "e5dbae2f-a66c-461e-828b-f5cb3bf06cf7",
+      "name": "15 Menit"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -528,
+        320
+      ],
+      "id": "dfa58d3c-cd11-4909-b7ab-91e7c3faba99",
+      "name": "Jam 7 Pagi"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"parameters\": {\n    \"fields\": {\n      \"text\": \"{{$json[\\\"summary\\\"]}}\",\n      \"title\": \"{{$json[\\\"title\\\"]}}\",\n      \"date\": \"{{$json[\\\"date\\\"]}}\",\n      \"source\": \"{{$json[\\\"url\\\"]}}\",\n      \"asset\": \"{{$json[\\\"assets\\\"]}}\",\n      \"sentiment_label\": \"{{$json[\\\"label\\\"]}}\",\n      \"compound_score\": \"{{$json[\\\"compound\\\"]}}\"\n    }\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -272,
+        -32
+      ],
+      "id": "acf2a3a4-ab08-4de3-b99c-e512111b019f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1PQCg0Pyj2NYHrzeET8kMhuLxWeAzwvYH9xftlHoxu88",
+          "mode": "list",
+          "cachedResultName": "rss_all_20260422_1405",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PQCg0Pyj2NYHrzeET8kMhuLxWeAzwvYH9xftlHoxu88/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 860922336,
+          "mode": "list",
+          "cachedResultName": "rss_all_20260422_1405",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PQCg0Pyj2NYHrzeET8kMhuLxWeAzwvYH9xftlHoxu88/edit#gid=860922336"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -320,
+        320
+      ],
+      "id": "eddf7903-a6b1-4cb1-b919-1ba2ae63c1f7",
+      "name": "Baca Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "utAiwXNfikfCvteo",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "15 Menit": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jam 7 Pagi": {
+      "main": [
+        [
+          {
+            "node": "Baca Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baca Data": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "85463063-9ed0-4b6f-bed9-d5477025e642",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6c7c9a62a5e386291ae0b91cdaf7d4e0256d5679a47324ea1d34238b98dc264"
+  },
+  "id": "hkPofY0Arfju4eWy",
+  "tags": []
+}
