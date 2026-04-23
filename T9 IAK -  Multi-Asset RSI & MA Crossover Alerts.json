@@ -1,0 +1,434 @@
+{
+  "name": "T9 IAK -  Multi-Asset RSI & MA Crossover Alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -496,
+        -208
+      ],
+      "id": "4adb564e-36d3-4f43-863d-99282bbdea89",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"symbols\": [\"AAPL\", \"TSLA\", \"MSFT\"]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        -208
+      ],
+      "id": "3fc23860-d9ed-4b65-80d5-aec9710a7fd9",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        96,
+        -224
+      ],
+      "id": "07787f3d-5a33-4c1a-98c9-7814047f0041",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ambil semua item hasil merge\nconst results = items.map(item => item.json);\n\n// Helper functions\nfunction SMA(data, period) {\n  return data.map((_, i, arr) => {\n    if (i < period) return null;\n    const slice = arr.slice(i - period, i);\n    return slice.reduce((a, b) => a + b, 0) / period;\n  });\n}\n\nfunction RSI(data, period = 14) {\n  const gains = [], losses = [];\n  for (let i = 1; i < data.length; i++) {\n    const diff = data[i] - data[i - 1];\n    gains.push(diff > 0 ? diff : 0);\n    losses.push(diff < 0 ? -diff : 0);\n  }\n  if (gains.length < period) return null;\n  let avgGain = gains.slice(0, period).reduce((a,b)=>a+b,0)/period;\n  let avgLoss = losses.slice(0, period).reduce((a,b)=>a+b,0)/period;\n  for (let i = period; i < gains.length; i++) {\n    avgGain = (avgGain * (period - 1) + gains[i]) / period;\n    avgLoss = (avgLoss * (period - 1) + losses[i]) / period;\n  }\n  const rs = avgGain / (avgLoss || 1);\n  return 100 - 100 / (1 + rs);\n}\n\nconst output = [];\n\nfor (const data of results) {\n  try {\n    // result adalah chart.result[0] jika ada\n    const result = data.chart?.result?.[0];\n\n    // > SKIP jika tidak ada chart/result\n    if (!result) {\n      output.push({ json: { error: 'No chart/result for one item', raw: data } });\n      continue;\n    }\n\n    // Symbol seharusnya ada di result.meta.symbol (Yahoo)\n    const symbol = result.meta?.symbol || data.symbol || data.meta?.symbol || 'UNKNOWN';\n\n    // Dapatkan closes, safety checks\n    const closesRaw = result.indicators?.quote?.[0]?.close;\n    if (!closesRaw || !Array.isArray(closesRaw)) {\n      output.push({ json: { symbol, error: 'No close prices in response' } });\n      continue;\n    }\n    const closes = closesRaw.filter(v => v !== null && v !== undefined);\n\n    // Pastikan cukup data untuk MA200; kalau tidak, beri flag\n    if (closes.length < 50) {\n      output.push({ json: { symbol, error: 'Not enough candles', candles: closes.length } });\n      continue;\n    }\n\n    // Hitung indikator\n    const ma50 = SMA(closes, 50);\n    const ma200 = SMA(closes, 200);\n    const lastClose = closes.at(-1);\n    const lastMA50 = ma50.filter(v => v !== null).at(-1) || null;\n    const lastMA200 = ma200.filter(v => v !== null).at(-1) || null;\n    const rsi = RSI(closes, 14);\n\n    // Tentukan sinyal (prioritas RSI dulu)\n    let signal = '⚪ Tidak ada sinyal saat ini';\n    if (rsi !== null && rsi < 30) signal = '🔵 RSI Oversold (Potensi Buy)';\n    else if (rsi !== null && rsi > 70) signal = '🔴 RSI Overbought (Potensi Sell)';\n    else if (lastMA50 !== null && lastMA200 !== null && lastMA50 > lastMA200) signal = '🟢 Golden Cross (Buy Signal)';\n    else if (lastMA50 !== null && lastMA200 !== null && lastMA50 < lastMA200) signal = '🔻 Death Cross (Sell Signal)';\n\n    output.push({\n      json: {\n        symbol,\n        lastClose,\n        rsi: rsi !== null ? Number(rsi.toFixed(2)) : null,\n        ma50: lastMA50 !== null ? Number(lastMA50.toFixed(2)) : null,\n        ma200: lastMA200 !== null ? Number(lastMA200.toFixed(2)) : null,\n        signal\n      }\n    });\n  } catch (err) {\n    output.push({ json: { error: err.message } });\n  }\n}\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        -208
+      ],
+      "id": "2aa9ac8b-aa06-4302-9b7c-a366835e48a4",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "chatId": "6058608381",
+        "text": "=📊 Symbol: {{$json.symbol}}\n\n💰 Harga terakhir: {{ $('Merge').item.json.chart.result[0].meta.regularMarketPrice }}\n📊 MA52 High: {{ $('Merge').item.json.chart.result[0].meta.fiftyTwoWeekHigh }}\n📊 MA52 Low: {{ $('Merge').item.json.chart.result[0].meta.fiftyTwoWeekLow }}\n\n🚨 Close sebelumnya : {{ $('Merge').item.json.chart.result[0].meta.chartPreviousClose }}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        -208
+      ],
+      "id": "fb6227d1-ba6a-4057-8d5b-dcb5006c4bdb",
+      "name": "Send a text message",
+      "webhookId": "31713c8e-f2d4-4b63-b17c-b5592107a6fa",
+      "credentials": {
+        "telegramApi": {
+          "id": "OoGQGoqwj49YhSgB",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -496,
+        224
+      ],
+      "id": "73fbe488-7421-4ad7-90bf-58e74a9d7985",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "1d"
+            },
+            {
+              "name": "interval",
+              "value": "5m"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -288,
+        224
+      ],
+      "id": "b1085960-8f17-494b-af75-4cd8bf4c9267",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// === Ambil data harga dari Yahoo Finance ===\nconst data = items[0].json.chart?.result?.[0];\nif (!data) {\n  return [{ json: { error: \"❌ Tidak ada data dari Yahoo Finance.\" } }];\n}\n\nconst closes = data.indicators.quote[0].close.filter(v => v !== null);\n\n// === Fungsi bantu ===\nfunction SMA(data, period) {\n  return data.map((_, i, arr) => {\n    if (i < period) return null;\n    const slice = arr.slice(i - period, i);\n    return slice.reduce((a, b) => a + b, 0) / period;\n  });\n}\n\nfunction RSI(data, period = 14) {\n  let gains = [], losses = [];\n  for (let i = 1; i < data.length; i++) {\n    const diff = data[i] - data[i - 1];\n    gains.push(diff > 0 ? diff : 0);\n    losses.push(diff < 0 ? -diff : 0);\n  }\n\n  if (gains.length < period) return null;\n\n  let avgGain = gains.slice(0, period).reduce((a, b) => a + b, 0) / period;\n  let avgLoss = losses.slice(0, period).reduce((a, b) => a + b, 0) / period;\n\n  for (let i = period; i < gains.length; i++) {\n    avgGain = (avgGain * (period - 1) + gains[i]) / period;\n    avgLoss = (avgLoss * (period - 1) + losses[i]) / period;\n  }\n\n  const rs = avgGain / (avgLoss || 1);\n  return 100 - 100 / (1 + rs);\n}\n\n// === Hitung indikator ===\nconst ma50 = SMA(closes, 50);\nconst ma200 = SMA(closes, 200);\n\nconst lastClose = closes.at(-1);\nconst lastMA50 = ma50.at(-1);\nconst lastMA200 = ma200.filter(v => v !== null).at(-1) || lastMA50;\nconst rsi = RSI(closes, 14);\n\n// === Tentukan sinyal ===\nlet signal = \"⚪ Tidak ada sinyal saat ini\";\nif (rsi && rsi < 30) signal = \"🔵 RSI Oversold (Potensi Buy)\";\nelse if (rsi && rsi > 70) signal = \"🔴 RSI Overbought (Potensi Sell)\";\nelse if (lastMA50 > lastMA200) signal = \"🟢 Golden Cross (Buy Signal)\";\nelse if (lastMA50 < lastMA200) signal = \"🔻 Death Cross (Sell Signal)\";\n\n// === Return hasil ===\nreturn [{\n  json: {\n    symbol: data.meta.symbol || \"BTC-USD\",\n    lastClose,\n    rsi: rsi ? rsi.toFixed(2) : null,\n    ma50: lastMA50 ? lastMA50.toFixed(2) : null,\n    ma200: lastMA200 ? lastMA200.toFixed(2) : null,\n    signal\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        224
+      ],
+      "id": "4cce277c-e34e-4d42-921c-fd9b311656a9",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "chatId": "6058608381",
+        "text": "=📊 [BTC-USD] Sinyal 5m\n\n💰 Harga terakhir: {{$json[\"lastClose\"]}}\n📈 RSI: {{$json[\"rsi\"]}}\n📊 MA50: {{$json[\"ma50\"]}}\n📊 MA200: {{$json[\"ma200\"]}}\n\n🚨 Sinyal: {{$json[\"signal\"]}}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        128,
+        224
+      ],
+      "id": "d2c0138a-2bae-45b0-8a88-cbabda0805ac",
+      "name": "Send a text message1",
+      "webhookId": "3e0b201d-94c3-4278-b89b-ff5c179a147c",
+      "credentials": {
+        "telegramApi": {
+          "id": "OoGQGoqwj49YhSgB",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?range=1mo&interval=1d",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "1mo"
+            },
+            {
+              "name": "interval",
+              "value": "1d"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -96,
+        -400
+      ],
+      "id": "d9dbb75d-a130-4335-901a-6c6a138c2e68",
+      "name": "AAPL"
+    },
+    {
+      "parameters": {
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/TSLA?range=1mo&interval=1d",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "1mo"
+            },
+            {
+              "name": "interval",
+              "value": "1d"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -96,
+        -208
+      ],
+      "id": "0f74e3be-8146-4257-8b5e-18fc2b2ae267",
+      "name": "TSLA"
+    },
+    {
+      "parameters": {
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/MSFT?range=1mo&interval=1d",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "1mo"
+            },
+            {
+              "name": "interval",
+              "value": "1d"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -96,
+        -48
+      ],
+      "id": "49fae3a5-55b8-4dc6-ade6-219111be8e03",
+      "name": "MSFT"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AAPL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TSLA",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "MSFT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AAPL": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TSLA": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "MSFT": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "43dab125-81f8-402e-8bb3-0dd4fd3ebd11",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6c7c9a62a5e386291ae0b91cdaf7d4e0256d5679a47324ea1d34238b98dc264"
+  },
+  "id": "hwggYfvxvScAtMBv",
+  "tags": []
+}
