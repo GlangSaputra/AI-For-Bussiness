@@ -1,0 +1,113 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Get Employee Data",
+      "type": "n8n-nodes-base.googleSheets",
+      "parameters": {
+        "operation": "read",
+        "sheetId": "YOUR_SHEET_ID",
+        "range": "ShiftData!A:D"
+      }
+    },
+    {
+      "id": "2",
+      "name": "Loop Employees",
+      "type": "n8n-nodes-base.splitInBatches",
+      "parameters": {
+        "batchSize": 1
+      }
+    },
+    {
+      "id": "3",
+      "name": "Rule Checker",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "language": "javascript",
+        "functionCode": "const emp = $json;\n\n// Simple rule example\nconst conflict = (emp.shift === emp.lastShift);\n\nreturn [{\n  json: {\n    employeeId: emp.employeeId,\n    shift: emp.shift,\n    valid: !conflict,\n    reason: conflict ? 'Shift bentrok dengan jadwal sebelumnya' : 'OK'\n  }\n}];"
+      }
+    },
+    {
+      "id": "4",
+      "name": "Check Conflict",
+      "type": "n8n-nodes-base.if",
+      "parameters": {
+        "conditions": [
+          {
+            "value1": "={{$json.valid}}",
+            "operation": "equal",
+            "value2": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "5",
+      "name": "Save Valid Schedule",
+      "type": "n8n-nodes-base.googleSheets",
+      "parameters": {
+        "operation": "append",
+        "sheetId": "YOUR_SHEET_ID",
+        "range": "ValidSchedule!A:D",
+        "options": {}
+      }
+    },
+    {
+      "id": "6",
+      "name": "Notify HR Conflict",
+      "type": "n8n-nodes-base.telegram",
+      "parameters": {
+        "chatId": "YOUR_CHAT_ID",
+        "text": "⚠️ Konflik jadwal untuk {{$json.employeeId}}: {{$json.reason}}"
+      }
+    }
+  ],
+  "connections": {
+    "Get Employee Data": {
+      "main": [
+        [
+          {
+            "node": "Loop Employees",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Loop Employees": {
+      "main": [
+        [
+          {
+            "node": "Rule Checker",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Rule Checker": {
+      "main": [
+        [
+          {
+            "node": "Check Conflict",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Check Conflict": {
+      "main": [
+        [
+          {
+            "node": "Save Valid Schedule",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "node": "Notify HR Conflict",
+            "type": "main"
+          }
+        ]
+      ]
+    }
+  }
+}
