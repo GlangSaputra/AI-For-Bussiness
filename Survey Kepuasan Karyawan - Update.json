@@ -1,0 +1,367 @@
+{
+  "name": "Survey Kepuasan Karyawan - Update",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -64,
+        -16
+      ],
+      "id": "33cfb019-7403-4c3e-a666-c20b89aaead5",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following employee feedback in Indonesian:\n\"{{ $json.feedback_text }}\"\n\nContext: You are a Senior HR Specialist.\nOutput must be JSON with fields:\n- sentiment: POSITIVE | NEUTRAL | NEGATIVE\n- category: Facilities | Management | Salary | Workload | Training | Other\n- action_plan: rekomendasi singkat dalam bahasa Indonesia (≤ 10 kata)\n",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        224,
+        0
+      ],
+      "id": "f234d33a-00d2-4ef5-b4df-57868322e7bb",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1jIyv5ff0vtfy9RBTwqyrPeTXeN_-Ej2mIt1DhHxQiAo",
+          "mode": "list",
+          "cachedResultName": "dummy karyawan",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jIyv5ff0vtfy9RBTwqyrPeTXeN_-Ej2mIt1DhHxQiAo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 120773943,
+          "mode": "list",
+          "cachedResultName": "Salinan dari Salinan dari dummy",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jIyv5ff0vtfy9RBTwqyrPeTXeN_-Ej2mIt1DhHxQiAo/edit#gid=120773943"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "employee_id": "={{ $('Google Sheets Trigger').item.json.employee_id }}",
+            "nama_karyawan": "={{ $('Google Sheets Trigger').item.json.nama_karyawan }}",
+            "tanggal_feedback": "={{ $('Google Sheets Trigger').item.json.tanggal_feedback }}",
+            "feedback_text": "={{ $('Google Sheets Trigger').item.json.feedback_text }}",
+            "sentiment": "={{ $json.output.properties.sentiment.enum[0] }}",
+            "category": "={{ $json.output.properties.category.enum[0] }}",
+            "action_plan": "={{ $json.output.properties.action_plan.description }}"
+          },
+          "matchingColumns": [
+            "employee_id"
+          ],
+          "schema": [
+            {
+              "id": "employee_id",
+              "displayName": "employee_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nama_karyawan",
+              "displayName": "nama_karyawan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tanggal_feedback",
+              "displayName": "tanggal_feedback",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "feedback_text",
+              "displayName": "feedback_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sentiment",
+              "displayName": "sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "action_plan",
+              "displayName": "action_plan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -528,
+        224
+      ],
+      "id": "c180f552-be9a-4c12-88d4-51938f2b5dc9",
+      "name": "Update Survey",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "utAiwXNfikfCvteo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ambil semua baris dari Google Sheets\nlet filteredItems = items.filter(item => \n  !item.json.sentiment || \n  !item.json.category || \n  !item.json.action_plan\n);\n\n// Loop hanya baris yang lolos filter\nfor (const item of filteredItems) {\n  const feedbackText = item.json.feedback;\n\n  // Lewati baris jika feedback kosong\n  if (!feedbackText) continue;\n\n  // Buat Prompt Khusus\n  const prompt = `\n  Analyze this employee feedback in Indonesian: \"${feedbackText}\"\n\n  Tasks:\n  1. Determine sentiment (POSITIVE, NEUTRAL, NEGATIVE).\n  2. Categorize the issue (Facilities, Management, Salary, Workload, Training, Other).\n  3. Suggest a quick action (max 5 words).\n\n  You must output ONLY valid JSON in this format:\n  {\n    \"sentiment\": \"...\",\n    \"category\": \"...\",\n    \"action_plan\": \"...\"\n  }\n  `;\n\n  // Simpan prompt ke property baru 'ai_prompt'\n  item.json.ai_prompt = prompt;\n}\n\nreturn filteredItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        -16
+      ],
+      "id": "cdd41a2c-cef9-4658-895a-1d8bf6227b0f",
+      "name": "Menyiapkan Prompt"
+    },
+    {
+      "parameters": {
+        "chatId": "6058608381",
+        "text": "=📊 Survey Kepuasan Karyawan - Update Baru\n\n👤 Nama: {{ $json.nama_karyawan }}\n🆔 ID: {{ $json.employee_id }}\n🗓️ Tanggal: {{ $json.tanggal_feedback }}\n\n📈 Analisis AI Dari Feedback Yang Diterima :\n- Sentiment: {{ $('Basic LLM Chain').item.json.output.properties.sentiment.enum[0] }}\n- Kategori: {{ $('Basic LLM Chain').item.json.output.properties.category.enum[0] }}\n- Action Plan: {{ $('Basic LLM Chain').item.json.output.properties.action_plan.description }}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -320,
+        224
+      ],
+      "id": "f31ae5fe-1804-479b-bb09-5a0213fed7fe",
+      "name": "Notifikasi Update (Telegram)",
+      "webhookId": "7dbbe02e-4a68-40a6-aec9-3c2535bfaf62",
+      "credentials": {
+        "telegramApi": {
+          "id": "OoGQGoqwj49YhSgB",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"sentiment\": {\n      \"type\": \"string\",\n      \"enum\": [\"POSITIVE\", \"NEUTRAL\", \"NEGATIVE\"],\n      \"description\": \"The emotional tone of the feedback\"\n    },\n    \"category\": {\n      \"type\": \"string\",\n      \"enum\": [\"Facilities\", \"Management\", \"Salary\", \"Workload\", \"Training\", \"Other\"],\n      \"description\": \"The main topic of the complaint/feedback\"\n    },\n    \"action_plan\": {\n      \"type\": \"string\",\n      \"description\": \"A short recommended action in Indonesian (max 10 words)\"\n    }\n  },\n  \"required\": [\"sentiment\", \"category\", \"action_plan\"]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        224
+      ],
+      "id": "1d30762c-4460-4a4c-b81c-cfa250581272",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        224
+      ],
+      "id": "dc17c438-d9a3-4317-9f42-c61d97ed3819",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9WHHQJEytVF47FPv",
+          "name": "Google Gemini(PaLM) Api account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1jIyv5ff0vtfy9RBTwqyrPeTXeN_-Ej2mIt1DhHxQiAo",
+          "mode": "list",
+          "cachedResultName": "dummy karyawan",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jIyv5ff0vtfy9RBTwqyrPeTXeN_-Ej2mIt1DhHxQiAo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 120773943,
+          "mode": "list",
+          "cachedResultName": "Salinan dari Salinan dari dummy",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jIyv5ff0vtfy9RBTwqyrPeTXeN_-Ej2mIt1DhHxQiAo/edit#gid=120773943"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        -16
+      ],
+      "id": "81a715fa-5d11-4150-8df1-ca0ca23edafd",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "k07g1MyIEXkuUFqZ",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Survey",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Menyiapkan Prompt": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Survey": {
+      "main": [
+        [
+          {
+            "node": "Notifikasi Update (Telegram)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Menyiapkan Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "10e07de2-3c18-4bd5-82a5-019819368d91",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6c7c9a62a5e386291ae0b91cdaf7d4e0256d5679a47324ea1d34238b98dc264"
+  },
+  "id": "lUK9azJ3YTupsPES",
+  "tags": []
+}
